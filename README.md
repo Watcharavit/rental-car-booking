@@ -6,7 +6,7 @@ SW Dev Practice Project
 
 ## Non-Functional Requirements
 Security:
-- The system shall authenticate users using usernamepassword.
+- The system shall authenticate users using username-password.
 - The system shall be able to keep user’s transactions confidential.
 
 Performance:
