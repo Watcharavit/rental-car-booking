@@ -23,7 +23,7 @@ app.use(express.json())
 app.use(cookieParser())
 
 //Mount routers
-app.use("/hospitals", provider)
+app.use("/provider", provider)
 app.use("/auth", auth)
 app.use("/rental", rental)
 
