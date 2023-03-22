@@ -77,3 +77,27 @@ exports.getMe = async (req, res, next) => {
 		data: user
 	})
 }
+
+//@desc		Log out
+//@route 	POST /auth/logout
+//@access	Private
+exports.logout = async (req, res, next) => {
+	const cookies = req.cookies
+	try {
+		const user = await User.findOne({ refreshToken: cookies.jwt })
+		if (!user) return res.status(401).json({ message: "Not found user" })
+
+		user.refreshToken = undefined
+		await user.save()
+
+		res.clearCookie("jwt", {
+			path: "/",
+			httpOnly: true,
+			secure: process.env.NODE_ENV === "production"
+		})
+		res.clearCookie("refreshToken")
+		res.send("Logged out successfully")
+	} catch (error) {
+		res.status(400).send({ message: error.message })
+	}
+}
