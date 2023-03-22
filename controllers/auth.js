@@ -79,7 +79,7 @@ exports.getMe = async (req, res, next) => {
 }
 
 //@desc		Log out
-//@route 	POST /auth/logout
+//@route 	PUT /auth/logout
 //@access	Private
 exports.logout = async (req, res, next) => {
 	const cookies = req.cookies
