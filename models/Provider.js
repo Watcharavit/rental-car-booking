@@ -17,7 +17,11 @@ const providerSchema = new mongoose.Schema(
 			type: String,
 			required: [true, "Please add a phone number"]
 		},
-		pickUpAndReturnLocation: { type: [String] }
+		pickUpAndReturnLocation: [String],
+		availableCarAmount: {
+			date: Date,
+			amount: Number
+		}
 	},
 	{
 		toJSON: { virtuals: true },

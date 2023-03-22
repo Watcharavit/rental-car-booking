@@ -36,7 +36,6 @@ exports.createProvider = async (req, res, next) => {
 	try {
 		const { name, address, tel } = req.body
 		const provider = await Provider.create({ name, address, tel })
-		console.log(provider)
 		res.status(201).json({
 			success: true,
 			data: provider

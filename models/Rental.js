@@ -1,8 +1,20 @@
 const mongoose = require("mongoose")
 
 const rentalSchema = new mongoose.Schema({
-	rentDate: {
+	pickUpDate: {
 		type: Date,
+		required: true
+	},
+	returnDate: {
+		type: Date,
+		required: true
+	},
+	pickUpLocation: {
+		type: String,
+		required: true
+	},
+	returnLocation: {
+		type: String,
 		required: true
 	},
 	user: {
@@ -10,9 +22,9 @@ const rentalSchema = new mongoose.Schema({
 		ref: "User",
 		required: true
 	},
-	car: {
+	provider: {
 		type: mongoose.Schema.ObjectId,
-		ref: "Car",
+		ref: "Provider",
 		required: true
 	},
 	createdAt: {
