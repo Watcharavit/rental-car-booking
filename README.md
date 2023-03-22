@@ -37,6 +37,6 @@ provider information includes the name, address, and telephone number.
 8. The system shall allow the admin to edit any rental car bookings.
 9. The system shall allow the admin to delete any rental car bookings.
 ### Additional Requirements
-10. The system shall allow the rental car provider to have multiple addresses for pickup and return locations of car.
+10. The system shall allow the rental car provider to have multiple pickup and return locations of car.
 11. The system shall allow the registered user to specifying pickup and return location of cars for car bookings.
-12. The system shall allow the registered user to view available cars to book after specifying pickup and return location.
+12. The system shall allow the registered user to view available providers that have available cars after specifying pickup and return location.
