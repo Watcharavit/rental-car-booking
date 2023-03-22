@@ -2,8 +2,8 @@ const Rental = require("../models/Rental")
 const Provider = require("../models/Provider")
 const Car = require("../models/Car")
 
-//@desc     Get all appointments
-//@route    GET /rental/
+//@desc     Get all rental
+//@route    GET /rental
 //@access   Public
 exports.getAllRentals = async (req, res, next) => {
 	let query

@@ -33,12 +33,18 @@ exports.getProvider = async (req, res, next) => {
 //@route    POST /provider
 //@access   Private
 exports.createProvider = async (req, res, next) => {
-	const { name, address, tel, pickUpAndReturnLocation } = req.body
-	const provider = await Provider.create({ name, address, tel, pickUpAndReturnLocation })
-	res.status(201).json({
-		success: true,
-		data: provider
-	})
+	try {
+		const { name, address, tel } = req.body
+		const provider = await Provider.create({ name, address, tel })
+		console.log(provider)
+		res.status(201).json({
+			success: true,
+			data: provider
+		})
+	} catch (err) {
+		console.log(err)
+		res.status(400).json({ success: false })
+	}
 }
 
 //@desc     Add pickup and return location
@@ -46,17 +52,17 @@ exports.createProvider = async (req, res, next) => {
 //@access   Private
 exports.addPickupAndReturnLocation = async (req, res, next) => {
 	try {
+		const { pickUpAndReturnLocation } = req.body
+		await Provider.updateOne({ _id: req.params.id }, { $addToSet: { pickUpAndReturnLocation } })
 		const provider = await Provider.findById(req.params.id)
-		provider.pickUpAndReturnLocation.push(req.body)
-		provider.save()
+		res.status(201).json({
+			success: true,
+			data: provider
+		})
 	} catch (err) {
 		console.log(err)
 		res.status(400).json({ success: false })
 	}
-	res.status(201).json({
-		success: true,
-		data: provider
-	})
 }
 
 //@desc     Update provider
