@@ -18,6 +18,10 @@ const providerSchema = new mongoose.Schema(
 			required: [true, "Please add a phone number"]
 		},
 		pickUpAndReturnLocation: [String],
+		rentalCarAmount: {
+			type: Number,
+			required: [true, "Please add rental car amount"]
+		},
 		availableCarAmount: {
 			date: Date,
 			amount: Number

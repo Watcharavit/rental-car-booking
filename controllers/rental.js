@@ -1,6 +1,5 @@
 const Rental = require("../models/Rental")
 const Provider = require("../models/Provider")
-const Car = require("../models/Car")
 
 //@desc     Get all rental
 //@route    GET /rental
@@ -9,30 +8,16 @@ exports.getAllRentals = async (req, res, next) => {
 	let query
 	//General users can see only thair rental!
 	if (req.user.role !== "admin") {
-		query = Rental.find({ user: req.user.id })
-			.populate({
-				path: "car",
-				select: "provider status"
-			})
-			.populate({
-				path: "car.provider",
-				select: "name address tel"
-			})
+		query = Rental.find({ user: req.user.id }).populate({
+			path: "provider",
+			select: "name"
+		})
 	} else {
 		//If you are an admin, you can see all!
-		query = Rental.find()
-			.populate({
-				path: "car",
-				select: "provider status"
-			})
-			.populate({
-				path: "car.provider",
-				select: "name address tel"
-			})
-			.populate({
-				path: "user",
-				select: "name email tel"
-			})
+		query = Rental.find().populate({
+			path: "provider",
+			select: "name"
+		})
 	}
 	try {
 		const allRentals = await query
@@ -47,52 +32,54 @@ exports.getAllRentals = async (req, res, next) => {
 	}
 }
 
-//@desc     Get single rental
-//@route    GET /rental/:id
-//@access   Public
-exports.getRental = async (req, res, next) => {
-	try {
-		const rental = await Rental.findById(req.params.id).populate({
-			path: "car",
-			select: "provider status"
-		})
-		if (!rental) {
-			return res.status(404).json({
-				success: false,
-				message: `No rental with the id of ${req.params.id}`
-			})
-		}
+// //@desc     Get single rental
+// //@route    GET /rental/:id
+// //@access   Public
+// exports.getRental = async (req, res, next) => {
+// 	try {
+// 		const rental = await Rental.findById(req.params.id).populate({
+// 			path: "car",
+// 			select: "provider status"
+// 		})
+// 		if (!rental) {
+// 			return res.status(404).json({
+// 				success: false,
+// 				message: `No rental with the id of ${req.params.id}`
+// 			})
+// 		}
 
-		res.status(200).json({
-			success: true,
-			data: rental
-		})
-	} catch (error) {
-		console.log(error)
-		return res.status(500).json({ success: false, message: "Cannot find rental" })
-	}
-}
+// 		res.status(200).json({
+// 			success: true,
+// 			data: rental
+// 		})
+// 	} catch (error) {
+// 		console.log(error)
+// 		return res.status(500).json({ success: false, message: "Cannot find rental" })
+// 	}
+// }
 
 //@desc     Add rental
-//@route    POST /rental/:carID
+//@route    POST /rental
 //@access   Private
 exports.addRental = async (req, res, next) => {
 	try {
-		const car = await Car.findById(req.params.carID)
+		const { pickUpDate, returnDate, pickUpLocation, returnLocation, provider } = req.body
+		const providerDoc = await Provider.findById(provider)
 
-		if (!car) {
-			return res.status(404).json({
-				success: false,
-				message: `No car with the id of ${req.params.carID}`
-			})
+		if (!providerDoc) {
+			return res.status(404).json({ success: false, message: `No provider with the id of ${req.params.provider}` })
 		}
 
-		if (!car.status) {
-			return res.status(400).json({
-				success: false,
-				message: `The car with the id of ${req.params.carID} is not available`
-			})
+		if (!(providerDoc.pickUpAndReturnLocation.includes(pickUpLocation) && providerDoc.pickUpAndReturnLocation.includes(returnLocation))) {
+			return res.status(400).json({ success: false, message: `Pick up or return location not availble` })
 		}
+
+		if (new Date(pickUpDate).getTime() > new Date(returnDate).getTime()) {
+			return res.status(400).json({ success: false, message: `Invalid pick up and return date` })
+		}
+
+		//add user and provider Id to req.body
+		req.body.user = req.user.id
 
 		//Check for existed rental
 		const existedRental = await Rental.find({ user: req.user.id })
@@ -120,73 +107,73 @@ exports.addRental = async (req, res, next) => {
 	}
 }
 
-//@desc     Update rental
-//@route    PUT /rental/:id
-//@access   Private
-exports.updateRental = async (req, res, next) => {
-	try {
-		let rental = await Rental.findById(req.params.id)
+// //@desc     Update rental
+// //@route    PUT /rental/:id
+// //@access   Private
+// exports.updateRental = async (req, res, next) => {
+// 	try {
+// 		let rental = await Rental.findById(req.params.id)
 
-		if (!rental) {
-			return res.status(404).json({
-				success: false,
-				message: `No rental with the id of ${req.params.id}`
-			})
-		}
+// 		if (!rental) {
+// 			return res.status(404).json({
+// 				success: false,
+// 				message: `No rental with the id of ${req.params.id}`
+// 			})
+// 		}
 
-		//Make sure user is the rental user
-		if (rental.user.toString() !== req.user.id && req.user.role !== "admin") {
-			return res.status(401).json({
-				success: false,
-				menubar: `User ${req.user.id} is not authorized to update this rental`
-			})
-		}
+// 		//Make sure user is the rental user
+// 		if (rental.user.toString() !== req.user.id && req.user.role !== "admin") {
+// 			return res.status(401).json({
+// 				success: false,
+// 				menubar: `User ${req.user.id} is not authorized to update this rental`
+// 			})
+// 		}
 
-		rental = await Rental.findByIdAndUpdate(req.params.id, req.body, {
-			new: true,
-			runValidators: true
-		})
+// 		rental = await Rental.findByIdAndUpdate(req.params.id, req.body, {
+// 			new: true,
+// 			runValidators: true
+// 		})
 
-		res.status(200).json({
-			success: true,
-			data: rental
-		})
-	} catch (error) {
-		console.log(error)
-		return res.status(500).json({ success: false, message: "Cannot update this rental" })
-	}
-}
+// 		res.status(200).json({
+// 			success: true,
+// 			data: rental
+// 		})
+// 	} catch (error) {
+// 		console.log(error)
+// 		return res.status(500).json({ success: false, message: "Cannot update this rental" })
+// 	}
+// }
 
-//@desc     Delete appointment
-//@route    DELETE /rental/:id
-//@access   Private
-exports.deleteRental = async (req, res, next) => {
-	try {
-		let rental = await Rental.findById(req.params.id)
+// //@desc     Delete appointment
+// //@route    DELETE /rental/:id
+// //@access   Private
+// exports.deleteRental = async (req, res, next) => {
+// 	try {
+// 		let rental = await Rental.findById(req.params.id)
 
-		if (!rental) {
-			return res.status(404).json({
-				success: false,
-				message: `No rental with the id of ${req.params.id}`
-			})
-		}
+// 		if (!rental) {
+// 			return res.status(404).json({
+// 				success: false,
+// 				message: `No rental with the id of ${req.params.id}`
+// 			})
+// 		}
 
-		//Make sure user is the rental owner
-		if (rental.user.toString() !== req.user.id && req.user.role !== "admin") {
-			return res.status(401).json({
-				success: false,
-				menubar: `User ${req.user.id} is not authorized to delete this rental`
-			})
-		}
+// 		//Make sure user is the rental owner
+// 		if (rental.user.toString() !== req.user.id && req.user.role !== "admin") {
+// 			return res.status(401).json({
+// 				success: false,
+// 				menubar: `User ${req.user.id} is not authorized to delete this rental`
+// 			})
+// 		}
 
-		rental = await Rental.remove()
+// 		rental = await Rental.remove()
 
-		res.status(200).json({
-			success: true,
-			data: {}
-		})
-	} catch (error) {
-		console.log(error)
-		return res.status(500).json({ success: false, message: "Cannot delete this rental" })
-	}
-}
+// 		res.status(200).json({
+// 			success: true,
+// 			data: {}
+// 		})
+// 	} catch (error) {
+// 		console.log(error)
+// 		return res.status(500).json({ success: false, message: "Cannot delete this rental" })
+// 	}
+// }
