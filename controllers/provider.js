@@ -1,6 +1,6 @@
 const Provider = require("../models/Provider")
 
-//@desc     GET all hospitals
+//@desc     GET all providers
 //@route    GET /provider
 //@access   Public
 exports.getAllProvider = async (req, res, next) => {

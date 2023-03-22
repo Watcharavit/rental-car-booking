@@ -2,6 +2,7 @@ const express = require("express")
 const dotenv = require("dotenv")
 const cookieParser = require("cookie-parser")
 const connectDB = require("./config/db")
+const morgan = require('morgan')
 
 //Load env vars
 dotenv.config({ path: "./config/config.env" })
@@ -21,6 +22,9 @@ app.use(express.json())
 
 //Cookie parser
 app.use(cookieParser())
+
+//Morgan - HTTP request logger
+app.use(morgan('dev'))
 
 //Mount routers
 app.use("/provider", provider)
