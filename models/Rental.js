@@ -1,19 +1,19 @@
-const mongoose = require("mongoose");
+const mongoose = require("mongoose")
 
 const rentalSchema = new mongoose.Schema({
 	rentDate: {
 		type: Date,
-		required: true,
+		required: true
 	},
 	user: {
 		type: mongoose.Schema.ObjectId,
 		ref: "User",
-		required: true,
+		required: true
 	},
 	car: {
 		type: mongoose.Schema.ObjectId,
 		ref: "Car",
-		required: true,
+		required: true
 	},
 	// may not be needed
 	// provider: {
@@ -23,8 +23,8 @@ const rentalSchema = new mongoose.Schema({
 	// },
 	createdAt: {
 		type: Date,
-		default: Date.now,
-	},
-});
+		default: Date.now
+	}
+})
 
-module.exports = mongoose.model("Rental", rentalSchema);
+module.exports = mongoose.model("Rental", rentalSchema)

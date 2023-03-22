@@ -1,172 +1,192 @@
-const Appointment = require("../models/Appointment");
-const Hospital = require("../models/Hospital");
+const Rental = require("../models/Rental")
+const Provider = require("../models/Provider")
+const Car = require("../models/Car")
 
 //@desc     Get all appointments
-//@route    GET /api/v1/appointments
+//@route    GET /rental/allRentals
 //@access   Public
-exports.getAppointments = async (req, res, next) => {
-	let query;
-	//General users can see only thair appointments!
+exports.getAllRentals = async (req, res, next) => {
+	let query
+	//General users can see only thair rental!
 	if (req.user.role !== "admin") {
-		query = Appointment.find({ user: req.user.id }).populate({
-			path: "hospital",
-			select: "name province tel",
-		});
+		query = Rental.find({ user: req.user.id })
+			.populate({
+				path: "car",
+				select: "provider status"
+			})
+			.populate({
+				path: "car.provider",
+				select: "name address tel"
+			})
 	} else {
 		//If you are an admin, you can see all!
-		query = Appointment.find().populate({
-			path: "hospital",
-			select: "name province tel",
-		});
+		query = Rental.find()
+			.populate({
+				path: "car",
+				select: "provider status"
+			})
+			.populate({
+				path: "car.provider",
+				select: "name address tel"
+			})
+			.populate({
+				path: "user",
+				select: "name email tel"
+			})
 	}
 	try {
-		const appointments = await query;
+		const allRentals = await query
 		res.status(200).json({
 			success: true,
-			count: appointments.length,
-			data: appointments,
-		});
+			count: allRentals.length,
+			data: allRentals
+		})
 	} catch (error) {
-		console.log(error);
-		return res.status(500).json({ success: false, message: "Cannot find Appointment" });
+		console.log(error)
+		return res.status(500).json({ success: false, message: "Cannot find rentals" })
 	}
-};
+}
 
-//@desc     Get single appointment
-//@route    GET /api/v1/appointments/:id
+//@desc     Get single rental
+//@route    GET /rental/:id
 //@access   Public
-exports.getAppointment = async (req, res, next) => {
+exports.getRental = async (req, res, next) => {
 	try {
-		const appointments = await Appointment.findById(req.params.id).populate({
-			path: "hospital",
-			select: "name province tel",
-		});
-		if (!appointments) {
+		const rental = await Rental.findById(req.params.id).populate({
+			path: "car",
+			select: "provider status"
+		})
+		if (!rental) {
 			return res.status(404).json({
 				success: false,
-				message: `No appointment with the id of ${req.params.id}`,
-			});
+				message: `No rental with the id of ${req.params.id}`
+			})
 		}
 
 		res.status(200).json({
 			success: true,
-			data: appointments,
-		});
+			data: rental
+		})
 	} catch (error) {
-		console.log(error);
-		return res.status(500).json({ success: false, message: "Cannot find Appointment" });
+		console.log(error)
+		return res.status(500).json({ success: false, message: "Cannot find rental" })
 	}
-};
+}
 
-//@desc     Add appointment
-//@route    POST /api/v1/hospitals/:hospitalId/appointment
+//@desc     Add rental
+//@route    POST /rental/:carID
 //@access   Private
-exports.addAppointment = async (req, res, next) => {
+exports.addRental = async (req, res, next) => {
 	try {
-		req.body.hospital = req.params.hospitalId;
+		const car = await Car.findById(req.params.carID)
 
-		const hospital = await Hospital.findById(req.params.hospitalId);
-
-		if (!hospital) {
+		if (!car) {
 			return res.status(404).json({
 				success: false,
-				message: `No hospital with the id of ${req.params.hospitalId}`,
-			});
+				message: `No car with the id of ${req.params.carID}`
+			})
 		}
 
-		//add user Id to req.body
-		req.body.user = req.user.id;
-
-		//Check for existed appointment
-		const existedAppointments = await Appointment.find({ user: req.user.id });
-
-		//If the user is not an admin, they can only crete 3 appointment.
-		if (existedAppointments.length >= 3 && req.user.role != "admin") {
+		if (!car.status) {
 			return res.status(400).json({
 				success: false,
-				message: `The user with ID ${req.user.id} has already made 3 appointments`,
-			});
+				message: `The car with the id of ${req.params.carID} is not available`
+			})
 		}
 
-		const appointment = await Appointment.create(req.body);
+		//Check for existed rental
+		const existedRental = await Rental.find({ user: req.user.id })
+
+		//If the user is not an admin, they can only crete 3 rental.
+		if (existedRental.length >= 3 && req.user.role != "admin") {
+			return res.status(400).json({
+				success: false,
+				message: `The user with ID ${req.user.id} has already made 3 rental`
+			})
+		}
+
+		req.body.car = req.params.carID
+		req.body.user = req.user.id
+
+		const rental = await Rental.create(req.body)
 
 		res.status(200).json({
 			success: true,
-			data: appointment,
-		});
+			data: rental
+		})
 	} catch (error) {
-		console.log(error);
-		return res.status(500).json({ success: false, message: "Cannot create Appointment" });
+		console.log(error)
+		return res.status(500).json({ success: false, message: "Cannot create this rental" })
 	}
-};
+}
 
-//@desc     Update appointment
-//@route    PUT /api/v1/appointments/:id
+//@desc     Update rental
+//@route    PUT /rental/:id
 //@access   Private
-exports.updateAppointment = async (req, res, next) => {
+exports.updateRental = async (req, res, next) => {
 	try {
-		let appointment = await Appointment.findById(req.params.id);
+		let rental = await Rental.findById(req.params.id)
 
-		if (!appointment) {
+		if (!rental) {
 			return res.status(404).json({
 				success: false,
-				message: `No appointment with the id of ${req.params.id}`,
-			});
+				message: `No rental with the id of ${req.params.id}`
+			})
 		}
 
-		//Make sure user is the appointment owner
-		if (appointment.user.toString() !== req.user.id && req.user.role !== "admin") {
+		//Make sure user is the rental user
+		if (rental.user.toString() !== req.user.id && req.user.role !== "admin") {
 			return res.status(401).json({
 				success: false,
-				menubar: `User ${req.user.id} is not authorized to update this appointment`,
-			});
+				menubar: `User ${req.user.id} is not authorized to update this rental`
+			})
 		}
 
-		appointment = await Appointment.findByIdAndUpdate(req.params.id, req.body, {
+		rental = await Rental.findByIdAndUpdate(req.params.id, req.body, {
 			new: true,
-			runValidators: true,
-		});
+			runValidators: true
+		})
 
 		res.status(200).json({
 			success: true,
-			data: appointment,
-		});
+			data: rental
+		})
 	} catch (error) {
-		console.log(error);
-		return res.status(500).json({ success: false, message: "Cannot update Appointment" });
+		console.log(error)
+		return res.status(500).json({ success: false, message: "Cannot update this rental" })
 	}
-};
+}
 
 //@desc     Delete appointment
-//@route    DELETE /api/v1/appointments/:id
+//@route    DELETE /rental/:id
 //@access   Private
-exports.deleteAppointment = async (req, res, next) => {
+exports.deleteRental = async (req, res, next) => {
 	try {
-		let appointment = await Appointment.findById(req.params.id);
+		let rental = await Rental.findById(req.params.id)
 
-		if (!appointment) {
+		if (!rental) {
 			return res.status(404).json({
 				success: false,
-				message: `No appointment with the id of ${req.params.id}`,
-			});
+				message: `No rental with the id of ${req.params.id}`
+			})
 		}
 
-		//Make sure user is the appointment owner
-		if (appointment.user.toString() !== req.user.id && req.user.role !== "admin") {
+		//Make sure user is the rental owner
+		if (rental.user.toString() !== req.user.id && req.user.role !== "admin") {
 			return res.status(401).json({
 				success: false,
-				menubar: `User ${req.user.id} is not authorized to delete this appointment`,
-			});
+				menubar: `User ${req.user.id} is not authorized to delete this rental`
+			})
 		}
 
-		appointment = await Appointment.remove();
+		rental = await Rental.remove()
 
 		res.status(200).json({
 			success: true,
-			data: {},
-		});
+			data: {}
+		})
 	} catch (error) {
-		console.log(error);
-		return res.status(500).json({ success: false, message: "Cannot delete Appointment" });
+		console.log(error)
+		return res.status(500).json({ success: false, message: "Cannot delete this rental" })
 	}
-};
+}

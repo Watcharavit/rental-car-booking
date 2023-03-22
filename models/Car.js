@@ -1,20 +1,22 @@
-const mongoose = require("mongoose");
+const mongoose = require("mongoose")
 
 const carSchema = new mongoose.Schema(
 	{
 		provider: {
 			type: mongoose.Schema.ObjectId,
 			ref: "Provider",
-			required: true,
+			required: true
 		},
 		status: {
-			type: Boolean,
-		},
+			type: Boolean
+			// true = avialable
+			// false = unavailable
+		}
 	},
 	{
 		toJSON: { virtuals: true },
-		toObject: { virtuals: true },
+		toObject: { virtuals: true }
 	}
-);
+)
 
-module.exports = mongoose.model("Car", carSchema);
+module.exports = mongoose.model("Car", carSchema)
