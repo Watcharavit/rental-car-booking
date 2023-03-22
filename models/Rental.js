@@ -15,12 +15,6 @@ const rentalSchema = new mongoose.Schema({
 		ref: "Car",
 		required: true
 	},
-	// may not be needed
-	// provider: {
-	// 	type: mongoose.Schema.ObjectId,
-	// 	ref: "Provider",
-	// 	required: true,
-	// },
 	createdAt: {
 		type: Date,
 		default: Date.now

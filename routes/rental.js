@@ -5,7 +5,7 @@ const router = express.Router({ mergeParams: true })
 
 const { protect, authorize } = require("../middleware/auth")
 
-router.get("/allRentals", protect, getAllRentals)
+router.get("/", protect, getAllRentals)
 router.post("/:CarId", protect, authorize("admin", "user"), addRental)
 router
 	.route("/:id")
