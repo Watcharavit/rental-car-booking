@@ -81,7 +81,6 @@ function getDatesInRange(startDate, endDate) {
 		dates.push(new Date(currentDate))
 		currentDate.setDate(currentDate.getDate() + 1)
 	}
-
 	return dates
 }
 
@@ -145,7 +144,7 @@ exports.addRental = async (req, res, next) => {
 
 		let newBookedCarAmount = providerDoc.bookedCarAmount
 
-		// update bookedCarAmount from pickUpDate to returnDate amount by 1
+		// increase bookedCarAmount from pickUpDate to returnDate amount by 1
 		getDatesInRange(new Date(pickUpDate), new Date(returnDate)).map((date) => {
 			let index = newBookedCarAmount.findIndex((book) => new Date(book.date).getTime() === date.getTime())
 			if (index !== -1) {
@@ -205,36 +204,57 @@ exports.addRental = async (req, res, next) => {
 // 	}
 // }
 
-// //@desc     Delete appointment
-// //@route    DELETE /rental/:id
-// //@access   Private
-// exports.deleteRental = async (req, res, next) => {
-// 	try {
-// 		let rental = await Rental.findById(req.params.id)
+//@desc     Delete rental
+//@route    DELETE /rental/:id
+//@access   Private
+exports.deleteRental = async (req, res, next) => {
+	try {
+		let rental = await Rental.findById(req.params.id)
 
-// 		if (!rental) {
-// 			return res.status(404).json({
-// 				success: false,
-// 				message: `No rental with the id of ${req.params.id}`
-// 			})
-// 		}
+		if (!rental) {
+			return res.status(404).json({
+				success: false,
+				message: `No rental with the id of ${req.params.id}`
+			})
+		}
 
-// 		//Make sure user is the rental owner
-// 		if (rental.user.toString() !== req.user.id && req.user.role !== "admin") {
-// 			return res.status(401).json({
-// 				success: false,
-// 				menubar: `User ${req.user.id} is not authorized to delete this rental`
-// 			})
-// 		}
+		//Make sure user is the rental owner
+		if (rental.user.toString() !== req.user.id && req.user.role !== "admin") {
+			return res.status(401).json({
+				success: false,
+				menubar: `User ${req.user.id} is not authorized to delete this rental`
+			})
+		}
 
-// 		rental = await Rental.remove()
+		let newBookedCarAmount = await Provider.findById(rental.provider._id)
+		newBookedCarAmount = newBookedCarAmount.bookedCarAmount
 
-// 		res.status(200).json({
-// 			success: true,
-// 			data: {}
-// 		})
-// 	} catch (error) {
-// 		console.log(error)
-// 		return res.status(500).json({ success: false, message: "Cannot delete this rental" })
-// 	}
-// }
+		// decrease bookedCarAmount from pickUpDate to returnDate amount by 1
+		newBookedCarAmount.forEach((book, index) => {
+			if (
+				new Date(rental.pickUpDate) <= new Date(book.date).getTime() &&
+				new Date(book.date).getTime() <= new Date(rental.returnDate)
+			) {
+				newBookedCarAmount[index].amount--
+			}
+		})
+		// remove book with amount = 0
+		newBookedCarAmount = newBookedCarAmount.filter((book) => {
+			book > 0
+		})
+
+		await Provider.findByIdAndUpdate(rental.provider, {
+			bookedCarAmount: newBookedCarAmount
+		})
+
+		rental = await Rental.remove()
+
+		res.status(200).json({
+			success: true,
+			data: {}
+		})
+	} catch (error) {
+		console.log(error)
+		return res.status(500).json({ success: false, message: "Cannot delete this rental" })
+	}
+}
