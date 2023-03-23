@@ -22,10 +22,12 @@ const providerSchema = new mongoose.Schema(
 			type: Number,
 			required: [true, "Please add rental car amount"]
 		},
-		availableCarAmount: {
-			date: Date,
-			amount: Number
-		}
+		bookedCarAmount: [
+			{
+				date: Date,
+				amount: { type: Number, default: 0 }
+			}
+		]
 	},
 	{
 		toJSON: { virtuals: true },
