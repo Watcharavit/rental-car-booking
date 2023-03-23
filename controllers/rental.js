@@ -8,16 +8,26 @@ exports.getAllRentals = async (req, res, next) => {
 	let query
 	//General users can see only thair rental!
 	if (req.user.role !== "admin") {
-		query = Rental.find({ user: req.user.id }).populate({
-			path: "provider",
-			select: "name"
-		})
+		query = Rental.find({ user: req.user.id })
+			.populate({
+				path: "provider",
+				select: "name address tel"
+			})
+			.populate({
+				path: "user",
+				select: "name email tel"
+			})
 	} else {
 		//If you are an admin, you can see all!
-		query = Rental.find().populate({
-			path: "provider",
-			select: "name"
-		})
+		query = Rental.find()
+			.populate({
+				path: "provider",
+				select: "name address tel"
+			})
+			.populate({
+				path: "user",
+				select: "name email tel"
+			})
 	}
 	try {
 		const allRentals = await query
@@ -32,31 +42,36 @@ exports.getAllRentals = async (req, res, next) => {
 	}
 }
 
-// //@desc     Get single rental
-// //@route    GET /rental/:id
-// //@access   Public
-// exports.getRental = async (req, res, next) => {
-// 	try {
-// 		const rental = await Rental.findById(req.params.id).populate({
-// 			path: "car",
-// 			select: "provider status"
-// 		})
-// 		if (!rental) {
-// 			return res.status(404).json({
-// 				success: false,
-// 				message: `No rental with the id of ${req.params.id}`
-// 			})
-// 		}
+//@desc     Get single rental
+//@route    GET /rental/:id
+//@access   Public
+exports.getRental = async (req, res, next) => {
+	try {
+		const rental = await Rental.findById(req.params.id)
+			.populate({
+				path: "provider",
+				select: "name address tel"
+			})
+			.populate({
+				path: "user",
+				select: "name email tel"
+			})
+		if (!rental) {
+			return res.status(404).json({
+				success: false,
+				message: `No rental with the id of ${req.params.id}`
+			})
+		}
 
-// 		res.status(200).json({
-// 			success: true,
-// 			data: rental
-// 		})
-// 	} catch (error) {
-// 		console.log(error)
-// 		return res.status(500).json({ success: false, message: "Cannot find rental" })
-// 	}
-// }
+		res.status(200).json({
+			success: true,
+			data: rental
+		})
+	} catch (error) {
+		console.log(error)
+		return res.status(500).json({ success: false, message: "Cannot find rental" })
+	}
+}
 
 function getDatesInRange(startDate, endDate) {
 	const dates = []
