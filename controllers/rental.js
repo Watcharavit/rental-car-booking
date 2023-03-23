@@ -58,6 +58,18 @@ exports.getAllRentals = async (req, res, next) => {
 // 	}
 // }
 
+function getDatesInRange(startDate, endDate) {
+	const dates = []
+	let currentDate = new Date(startDate)
+
+	while (currentDate <= endDate) {
+		dates.push(new Date(currentDate))
+		currentDate.setDate(currentDate.getDate() + 1)
+	}
+
+	return dates
+}
+
 //@desc     Add rental
 //@route    POST /rental
 //@access   Private
@@ -67,10 +79,17 @@ exports.addRental = async (req, res, next) => {
 		const providerDoc = await Provider.findById(provider)
 
 		if (!providerDoc) {
-			return res.status(404).json({ success: false, message: `No provider with the id of ${req.params.provider}` })
+			return res
+				.status(404)
+				.json({ success: false, message: `No provider with the id of ${req.params.provider}` })
 		}
 
-		if (!(providerDoc.pickUpAndReturnLocation.includes(pickUpLocation) && providerDoc.pickUpAndReturnLocation.includes(returnLocation))) {
+		if (
+			!(
+				providerDoc.pickUpAndReturnLocation.includes(pickUpLocation) &&
+				providerDoc.pickUpAndReturnLocation.includes(returnLocation)
+			)
+		) {
 			return res.status(400).json({ success: false, message: `Pick up or return location not availble` })
 		}
 
@@ -89,7 +108,6 @@ exports.addRental = async (req, res, next) => {
 		if (!availableToBook) {
 			return res.status(400).json({ success: false, message: `Car is not available in specific date` })
 		}
-		//update bookedCarAmount from pickUpDate to returnDate amount by 1
 
 		//add user and provider Id to req.body
 		req.body.user = req.user.id
@@ -109,6 +127,21 @@ exports.addRental = async (req, res, next) => {
 		req.body.user = req.user.id
 
 		const rental = await Rental.create(req.body)
+
+		let newBookedCarAmount = providerDoc.bookedCarAmount
+
+		// update bookedCarAmount from pickUpDate to returnDate amount by 1
+		getDatesInRange(new Date(pickUpDate), new Date(returnDate)).map((date) => {
+			let index = newBookedCarAmount.findIndex((book) => new Date(book.date).getTime() === date.getTime())
+			if (index !== -1) {
+				newBookedCarAmount[index].amount++
+			} else {
+				newBookedCarAmount.push({ date: date, amount: 1 })
+			}
+		})
+		await Provider.findByIdAndUpdate(provider, {
+			bookedCarAmount: newBookedCarAmount
+		})
 
 		res.status(200).json({
 			success: true,
