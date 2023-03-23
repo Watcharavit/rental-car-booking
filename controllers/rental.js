@@ -78,6 +78,19 @@ exports.addRental = async (req, res, next) => {
 			return res.status(400).json({ success: false, message: `Invalid pick up and return date` })
 		}
 
+		//check if from pickUpDate to returnDate have rentalCarAmount-bookedCarAmount > 0
+		const availableToBook =
+			providerDoc.bookedCarAmount.every((book) => {
+				if (new Date(pickUpDate).getTime() <= book.date && book.date <= new Date(returnDate).getTime()) {
+					return providerDoc.rentalCarAmount - book.amount > 0
+				} else return true
+			}) && providerDoc.rentalCarAmount > 0
+
+		if (!availableToBook) {
+			return res.status(400).json({ success: false, message: `Car is not available in specific date` })
+		}
+		//update bookedCarAmount from pickUpDate to returnDate amount by 1
+
 		//add user and provider Id to req.body
 		req.body.user = req.user.id
 
