@@ -2,6 +2,13 @@ const User = require("../models/User")
 
 //@desc    Register user
 //@route   POST /auth/register
+//@param	{
+//     			"name": "Admin",
+//     			"email": "Admin@gmail.com",
+//     			"tel": "0890002222",
+//     			"password": "12345678",
+//     			"role": "admin"
+// 			}
 //@access  Public
 exports.register = async (req, res, next) => {
 	try {
@@ -25,6 +32,10 @@ exports.register = async (req, res, next) => {
 
 //@desc		Login user
 //@route	POST /auth/login
+//@param	{
+//     			"email": "Admin@gmail.com",
+//     			"password": "12345678",
+// 			}
 //@access	Public
 exports.login = async (req, res, next) => {
 	const { email, password } = req.body

@@ -139,6 +139,12 @@ exports.addRental = async (req, res, next) => {
 
 //@desc     Update rental
 //@route    PUT /rental/:id
+//@param	{
+//    			"pickUpDate"?:"2023-05-20",
+//   			"returnDate"?:"2023-05-23",
+//   			"pickUpLocation"?:"Bangkok",
+//   			"returnLocation"?:"Phuket"
+//			}
 //@access   Private
 exports.updateRental = async (req, res, next) => {
 	try {
@@ -177,7 +183,7 @@ exports.updateRental = async (req, res, next) => {
 		if (error) return error
 
 		const deletedCarBookings = getDeletedCarBookings(rental, currentProvider)
-		console.log("1", deletedCarBookings)
+
 		error = validateAvailabilityToBook(
 			isSameProvider ? deletedCarBookings : getDeletedCarBookings(rental, newProvider),
 			newProvider.rentalCarCapacity,
@@ -187,7 +193,6 @@ exports.updateRental = async (req, res, next) => {
 		)
 		if (error) return error
 
-		console.log("2", deletedCarBookings)
 		// delete car bookings from old provider
 		const updatedOldProvider = await Provider.findByIdAndUpdate(
 			rental.provider,
@@ -197,7 +202,6 @@ exports.updateRental = async (req, res, next) => {
 			{ new: true }
 		)
 
-		console.log("3", updatedOldProvider, isSameProvider)
 		// add car bookings to new provider
 		const updatedNewProvider = await Provider.findByIdAndUpdate(
 			provider,

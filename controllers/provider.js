@@ -31,6 +31,12 @@ exports.getProvider = async (req, res, next) => {
 
 //@desc     Create provider
 //@route    POST /provider
+//@param	{
+//     			"name": "Home Car",
+//     			"address": "Bangkok",
+//     			"tel": "0992225555",
+//     			"rentalCarCapacity": 12
+// 			}
 //@access   Private
 exports.createProvider = async (req, res, next) => {
 	try {
@@ -48,7 +54,9 @@ exports.createProvider = async (req, res, next) => {
 
 //@desc     Add pickup and return locations
 //@route    POST /provider/:id
-//@param	{ "pickUpAndReturnLocation": ["Bangkok", "Phuket", "Chiang Mai"] }
+//@param	{ 
+// 				"pickUpAndReturnLocation": ["Bangkok", "Phuket", "Chiang Mai"] 
+// 			}
 //@access   Private
 exports.addPickupAndReturnLocation = async (req, res, next) => {
 	try {
@@ -74,6 +82,18 @@ exports.addPickupAndReturnLocation = async (req, res, next) => {
 
 //@desc     Update provider
 //@route    PUT /provider/:id
+//@param	{
+//     			"name"?: "Home Car",
+//     			"address"?: "Bangkok",
+//     			"tel"?: "0992225555",
+//     			"rentalCarCapacity"?: 12,
+//				"pickUpAndReturnLocation"?: ["Bangkok", "Phuket", "Chiang Mai"], 
+//				"carBookings"?: [{
+//                    "date": "2025-02-16T00:00:00.000Z",
+//                    "amount": 1,
+//                    "_id": "641ded2f0636c2712dc7dd05"
+//               }]
+// 			}
 //@access   Private
 exports.updateProvider = async (req, res, next) => {
 	try {
