@@ -1,3 +1,14 @@
+const {
+	getDatesInRange,
+	getAddedCarBookings,
+	validateAvailabilityToBook,
+	validatePickUpAndReturnDate,
+	validatePickUpAndReturnLocations,
+	validateProvider,
+	validateRental,
+	getDeletedCarBookings
+} = require("../utils/utils")
+
 const Rental = require("../models/Rental")
 const Provider = require("../models/Provider")
 
@@ -73,73 +84,32 @@ exports.getRental = async (req, res, next) => {
 	}
 }
 
-function getDatesInRange(startDate, endDate) {
-	const dates = []
-	let currentDate = new Date(startDate)
-
-	while (currentDate <= endDate) {
-		dates.push(new Date(currentDate))
-		currentDate.setDate(currentDate.getDate() + 1)
-	}
-	return dates
-}
-
 //@desc     Add rental
-//@route    POST /rental
+//@route    POST /rental/:providerId
 //@param	{
 //    			"pickUpDate":"2023-05-20",
 //   			"returnDate":"2023-05-23",
 //   			"pickUpLocation":"Bangkok",
-//   			"returnLocation":"Phuket",
-//				"provider": "641d992a1aa285443ad6cb54"
+//   			"returnLocation":"Phuket"
 //			}
 //@access   Private
 exports.addRental = async (req, res, next) => {
 	try {
-		const { pickUpDate, returnDate, pickUpLocation, returnLocation, provider } = req.body
-		const providerDoc = await Provider.findById(provider)
+		const { pickUpLocation, returnLocation } = req.body
+		const pickUpDate = new Date(req.body.pickUpDate)
+		const returnDate = new Date(req.body.returnDate)
 
-		if (!providerDoc) {
-			return res
-				.status(404)
-				.json({ success: false, message: `No provider with the id of ${req.params.provider}` })
-		}
+		const provider = await Provider.findById(req.params.providerId)
 
-		if (
-			!(
-				providerDoc.pickUpAndReturnLocations.includes(pickUpLocation) &&
-				providerDoc.pickUpAndReturnLocations.includes(returnLocation)
-			)
-		) {
-			return res.status(400).json({ success: false, message: `Pick up or return location not availble` })
-		}
-
-		if (new Date(pickUpDate).getTime() > new Date(returnDate).getTime()) {
-			return res.status(400).json({ success: false, message: `Invalid pick up and return date` })
-		}
-
-		//check if from pickUpDate to returnDate have rentalCarCapacity-carBookings > 0
-		const availableToBook =
-			providerDoc.carBookings.every((book) => {
-				if (
-					new Date(pickUpDate).getTime() <= book.date.getTime() &&
-					book.date.getTime() <= new Date(returnDate).getTime()
-				) {
-					return providerDoc.rentalCarCapacity - book.amount > 0
-				} else return true
-			}) && providerDoc.rentalCarCapacity > 0
-
-		if (!availableToBook) {
-			return res.status(400).json({ success: false, message: `Car is not available in specific date` })
-		}
-
-		//add user and provider Id to req.body
-		req.body.user = req.user.id
+		validateProvider(provider, req, res)
+		validatePickUpAndReturnLocations(provider, pickUpLocation, returnLocation, res)
+		validatePickUpAndReturnDate(pickUpDate, returnDate, res)
+		validateAvailabilityToBook(provider, pickUpDate, returnDate, res)
 
 		//Check for existed rental
 		const existedRental = await Rental.find({ user: req.user.id })
 
-		//If the user is not an admin, they can only crete 3 rental.
+		//If the user is not an admin, they can only create 3 rental.
 		if (existedRental.length >= 3 && req.user.role != "admin") {
 			return res.status(400).json({
 				success: false,
@@ -147,23 +117,13 @@ exports.addRental = async (req, res, next) => {
 			})
 		}
 
+		//add user and provider Id to req.body
 		req.body.user = req.user.id
-
+		req.body.provider = req.params.providerId
 		const rental = await Rental.create(req.body)
 
-		let newCarBookings = providerDoc.carBookings
-
-		// increase carBookings from pickUpDate to returnDate amount by 1
-		getDatesInRange(new Date(pickUpDate), new Date(returnDate)).map((date) => {
-			let index = newCarBookings.findIndex((book) => new Date(book.date).getTime() === date.getTime())
-			if (index !== -1) {
-				newCarBookings[index].amount++
-			} else {
-				newCarBookings.push({ date: date, amount: 1 })
-			}
-		})
-		await Provider.findByIdAndUpdate(provider, {
-			carBookings: newCarBookings
+		await Provider.findByIdAndUpdate(req.params.providerId, {
+			carBookings: getAddedCarBookings(provider, pickUpDate, returnDate)
 		})
 
 		res.status(200).json({
@@ -357,13 +317,7 @@ exports.updateRental = async (req, res, next) => {
 exports.deleteRental = async (req, res, next) => {
 	try {
 		const rental = await Rental.findOneAndDelete({ _id: req.params.id })
-
-		if (!rental) {
-			return res.status(404).json({
-				success: false,
-				message: `No rental with the id of ${req.params.id}`
-			})
-		}
+		validateRental(rental, req, res)
 
 		//Make sure user is the rental owner
 		if (rental.user.toString() !== req.user.id && req.user.role !== "admin") {
@@ -374,23 +328,9 @@ exports.deleteRental = async (req, res, next) => {
 		}
 
 		const provider = await Provider.findById(rental.provider._id)
-		const carBookings = provider.carBookings
-
-		// decrease carBookings from pickUpDate to returnDate amount by 1
-		const pickUpDate = new Date(rental.pickUpDate)
-		const returnDate = new Date(rental.returnDate)
-		carBookings.forEach((book) => {
-			const bookDate = new Date(book.date)
-			if (pickUpDate.getTime() <= bookDate.getTime() && bookDate.getTime() <= returnDate.getTime()) {
-				book.amount--
-			}
-		})
-
-		// remove book with amount = 0
-		const newCarBookings = carBookings.filter((book) => book.amount > 0)
 
 		await Provider.findByIdAndUpdate(rental.provider, {
-			carBookings: newCarBookings
+			carBookings: getDeletedCarBookings(rental, provider)
 		})
 
 		res.status(200).json({
