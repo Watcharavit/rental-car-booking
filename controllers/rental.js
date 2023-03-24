@@ -1,5 +1,4 @@
 const {
-	getDatesInRange,
 	getAddedCarBookings,
 	validateAvailabilityToBook,
 	validatePickUpAndReturnDate,
