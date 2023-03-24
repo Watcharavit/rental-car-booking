@@ -86,6 +86,13 @@ function getDatesInRange(startDate, endDate) {
 
 //@desc     Add rental
 //@route    POST /rental
+//@param	{
+//    			"pickUpDate":"2023-05-20",
+//   			"returnDate":"2023-05-23",
+//   			"pickUpLocation":"Bangkok",
+//   			"returnLocation":"Phuket",
+//				"provider": "641d992a1aa285443ad6cb54"
+//			}
 //@access   Private
 exports.addRental = async (req, res, next) => {
 	try {
@@ -100,8 +107,8 @@ exports.addRental = async (req, res, next) => {
 
 		if (
 			!(
-				providerDoc.pickUpAndReturnLocation.includes(pickUpLocation) &&
-				providerDoc.pickUpAndReturnLocation.includes(returnLocation)
+				providerDoc.pickUpAndReturnLocations.includes(pickUpLocation) &&
+				providerDoc.pickUpAndReturnLocations.includes(returnLocation)
 			)
 		) {
 			return res.status(400).json({ success: false, message: `Pick up or return location not availble` })
@@ -111,13 +118,13 @@ exports.addRental = async (req, res, next) => {
 			return res.status(400).json({ success: false, message: `Invalid pick up and return date` })
 		}
 
-		//check if from pickUpDate to returnDate have rentalCarAmount-bookedCarAmount > 0
+		//check if from pickUpDate to returnDate have rentalCarCapacity-carBookings > 0
 		const availableToBook =
-			providerDoc.bookedCarAmount.every((book) => {
+			providerDoc.carBookings.every((book) => {
 				if (new Date(pickUpDate).getTime() <= book.date && book.date <= new Date(returnDate).getTime()) {
-					return providerDoc.rentalCarAmount - book.amount > 0
+					return providerDoc.rentalCarCapacity - book.amount > 0
 				} else return true
-			}) && providerDoc.rentalCarAmount > 0
+			}) && providerDoc.rentalCarCapacity > 0
 
 		if (!availableToBook) {
 			return res.status(400).json({ success: false, message: `Car is not available in specific date` })
@@ -142,19 +149,19 @@ exports.addRental = async (req, res, next) => {
 
 		const rental = await Rental.create(req.body)
 
-		let newBookedCarAmount = providerDoc.bookedCarAmount
+		let newCarBookings = providerDoc.carBookings
 
-		// increase bookedCarAmount from pickUpDate to returnDate amount by 1
+		// increase carBookings from pickUpDate to returnDate amount by 1
 		getDatesInRange(new Date(pickUpDate), new Date(returnDate)).map((date) => {
-			let index = newBookedCarAmount.findIndex((book) => new Date(book.date).getTime() === date.getTime())
+			let index = newCarBookings.findIndex((book) => new Date(book.date).getTime() === date.getTime())
 			if (index !== -1) {
-				newBookedCarAmount[index].amount++
+				newCarBookings[index].amount++
 			} else {
-				newBookedCarAmount.push({ date: date, amount: 1 })
+				newCarBookings.push({ date: date, amount: 1 })
 			}
 		})
 		await Provider.findByIdAndUpdate(provider, {
-			bookedCarAmount: newBookedCarAmount
+			carBookings: newCarBookings
 		})
 
 		res.status(200).json({
@@ -209,7 +216,7 @@ exports.addRental = async (req, res, next) => {
 //@access   Private
 exports.deleteRental = async (req, res, next) => {
 	try {
-		let rental = await Rental.findById(req.params.id)
+		const rental = await Rental.findOneAndDelete({ _id: req.params.id })
 
 		if (!rental) {
 			return res.status(404).json({
@@ -226,28 +233,25 @@ exports.deleteRental = async (req, res, next) => {
 			})
 		}
 
-		let newBookedCarAmount = await Provider.findById(rental.provider._id)
-		newBookedCarAmount = newBookedCarAmount.bookedCarAmount
+		const provider = await Provider.findById(rental.provider._id)
+		const carBookings = provider.carBookings
 
-		// decrease bookedCarAmount from pickUpDate to returnDate amount by 1
-		newBookedCarAmount.forEach((book, index) => {
-			if (
-				new Date(rental.pickUpDate) <= new Date(book.date).getTime() &&
-				new Date(book.date).getTime() <= new Date(rental.returnDate)
-			) {
-				newBookedCarAmount[index].amount--
+		// decrease carBookings from pickUpDate to returnDate amount by 1
+		carBookings.forEach((book) => {
+			const bookDate = new Date(book.date)
+			const pickUpDate = new Date(rental.pickUpDate)
+			const returnDate = new Date(rental.returnDate)
+			if (pickUpDate <= bookDate && bookDate <= returnDate) {
+				book.amount--
 			}
 		})
+
 		// remove book with amount = 0
-		newBookedCarAmount = newBookedCarAmount.filter((book) => {
-			book > 0
-		})
+		const newCarBookings = carBookings.filter((book) => book.amount > 0)
 
 		await Provider.findByIdAndUpdate(rental.provider, {
-			bookedCarAmount: newBookedCarAmount
+			carBookings: newCarBookings
 		})
-
-		rental = await Rental.remove()
 
 		res.status(200).json({
 			success: true,

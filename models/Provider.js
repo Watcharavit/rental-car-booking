@@ -17,12 +17,12 @@ const providerSchema = new mongoose.Schema(
 			type: String,
 			required: [true, "Please add a phone number"]
 		},
-		pickUpAndReturnLocation: [String],
-		rentalCarAmount: {
+		pickUpAndReturnLocations: [String],
+		rentalCarCapacity: {
 			type: Number,
 			required: [true, "Please add rental car amount"]
 		},
-		bookedCarAmount: [
+		carBookings: [
 			{
 				date: Date,
 				amount: { type: Number, default: 0 }

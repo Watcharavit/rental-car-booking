@@ -34,8 +34,8 @@ exports.getProvider = async (req, res, next) => {
 //@access   Private
 exports.createProvider = async (req, res, next) => {
 	try {
-		const { name, address, tel, rentalCarAmount } = req.body
-		const provider = await Provider.create({ name, address, tel, rentalCarAmount })
+		const { name, address, tel, rentalCarCapacity } = req.body
+		const provider = await Provider.create({ name, address, tel, rentalCarCapacity })
 		res.status(201).json({
 			success: true,
 			data: provider
@@ -46,17 +46,20 @@ exports.createProvider = async (req, res, next) => {
 	}
 }
 
-// no need this, can use Update instead
-//@desc     Add pickup and return location
+//@desc     Add pickup and return locations
 //@route    POST /provider/:id
+//@param	{ "pickUpAndReturnLocation": ["Bangkok", "Phuket", "Chiang Mai"] }
 //@access   Private
 exports.addPickupAndReturnLocation = async (req, res, next) => {
 	try {
 		const { pickUpAndReturnLocation } = req.body
-		await Provider.updateOne({ _id: req.params.id }, { $addToSet: { pickUpAndReturnLocation } })
-		const provider = await Provider.findById(req.params.id)
+		const provider = await Provider.findByIdAndUpdate(
+			req.params.id,
+			{ $addToSet: { pickUpAndReturnLocations: { $each: pickUpAndReturnLocation } } },
+			{ new: true }
+		)
 		if (!provider) {
-			return res.status(400).json({ success: false })
+			return res.status(400).json({ success: false, error: "Provider not found" })
 		}
 
 		res.status(201).json({
