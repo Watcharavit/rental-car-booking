@@ -47,7 +47,7 @@ providerSchema.virtual("rental", {
 	justOne: false
 })
 
-//Cascade delete cars when a provider is deleted
+//Cascade delete rentals when a provider is deleted
 providerSchema.pre("remove", async function (next) {
 	console.log(`Rentals being removed from provider ${this.id}`)
 	await this.model("Rental").deleteMany({ provider: this._id })
