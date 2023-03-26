@@ -17,7 +17,7 @@ exports.getAllProvider = async (req, res, next) => {
 //@access   Public
 exports.getProvider = async (req, res, next) => {
 	try {
-		const provider = await Provider.findById(req.params.id)
+		const provider = await Provider.findById(req.params.id).populate('rental')
 
 		if (!provider) {
 			return res.status(400).json({ success: false })
