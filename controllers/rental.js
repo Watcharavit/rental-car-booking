@@ -106,6 +106,7 @@ exports.addRental = async (req, res, next) => {
 			validatePickUpAndReturnDate(pickUpDate, returnDate, res) ??
 			validateAvailabilityToBook(provider.carBookings, provider.rentalCarCapacity, pickUpDate, returnDate, res)
 		if (error) return error
+		
 		//Check for existed rental
 		const existedRental = await Rental.find({ user: req.user.id })
 

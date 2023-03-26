@@ -25,9 +25,13 @@ const providerSchema = new mongoose.Schema(
 		carBookings: [
 			{
 				date: Date,
-				amount: { type: Number, default: 0 }
+				amount: Number
 			}
-		]
+		],
+		createdAt: {
+			type: Date,
+			default: Date.now
+		}
 	},
 	{
 		toJSON: { virtuals: true },
