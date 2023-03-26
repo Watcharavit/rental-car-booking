@@ -5,7 +5,7 @@ const Provider = require("../models/Provider")
 //@access   Public
 exports.getAllProvider = async (req, res, next) => {
 	try {
-		const providers = await Provider.find()
+		const providers = await Provider.find().populate('rental')
 		res.status(200).json({ success: true, count: providers.length, data: providers })
 	} catch (err) {
 		res.status(400).json({ success: false })
