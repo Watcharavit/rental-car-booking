@@ -185,7 +185,7 @@ exports.updateRental = async (req, res, next) => {
 		const deletedCarBookings = getDeletedCarBookings(rental, currentProvider)
 
 		error = validateAvailabilityToBook(
-			isSameProvider ? deletedCarBookings : getDeletedCarBookings(rental, newProvider),
+			isSameProvider ? deletedCarBookings : newProvider.carBookings,
 			newProvider.rentalCarCapacity,
 			pickUpDate,
 			returnDate,
