@@ -54,7 +54,7 @@ exports.getAllRentals = async (req, res, next) => {
 
 //@desc     Get single rental
 //@route    GET /rental/:id
-//@access   Public
+//@access   Private
 exports.getRental = async (req, res, next) => {
 	try {
 		const rental = await Rental.findById(req.params.id)
@@ -73,6 +73,13 @@ exports.getRental = async (req, res, next) => {
 			})
 		}
 
+		//General users can see only thair rental!
+		if (req.user.role !== "admin" && rental.user._id.toString() !== req.user.id) {
+			return res.status(401).json({
+				success: false,
+				message: `Not authorize to access rental with the id of ${req.params.id}`
+			})
+		}
 		res.status(200).json({
 			success: true,
 			data: rental
@@ -106,7 +113,7 @@ exports.addRental = async (req, res, next) => {
 			validatePickUpAndReturnDate(pickUpDate, returnDate, res) ??
 			validateAvailabilityToBook(provider.carBookings, provider.rentalCarCapacity, pickUpDate, returnDate, res)
 		if (error) return error
-		
+
 		//Check for existed rental
 		const existedRental = await Rental.find({ user: req.user.id })
 
