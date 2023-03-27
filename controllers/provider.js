@@ -2,23 +2,37 @@ const Provider = require("../models/Provider")
 
 //@desc     GET all providers
 //@route    GET /provider
-//@access   Public
+//@access   Private
 exports.getAllProvider = async (req, res, next) => {
 	try {
-		const providers = await Provider.find().populate('rental')
+		let providers
+		// Admin can see rentals belong to provider
+		if (req.user.role === "admin") {
+			providers = await Provider.find().populate("rental")
+		} else {
+			// User cannot see some fields
+			providers = await Provider.find({}, { carBookings: 0, rentalCarCapacity: 0, createdAt: 0 })
+		}
 		res.status(200).json({ success: true, count: providers.length, data: providers })
 	} catch (err) {
+		console.log(err)
 		res.status(400).json({ success: false })
 	}
 }
 
 //@desc     GET single provider
 //@route    GET /provider/:id
-//@access   Public
+//@access   Private
 exports.getProvider = async (req, res, next) => {
 	try {
-		const provider = await Provider.findById(req.params.id).populate('rental')
-
+		let provider
+		// Admin can see rentals belong to provider
+		if (req.user.role === "admin") {
+			provider = await Provider.findById(req.params.id).populate("rental")
+		} else {
+			// User cannot see some fields
+			provider = await Provider.findById(req.params.id, { carBookings: 0, rentalCarCapacity: 0, createdAt: 0 })
+		}
 		if (!provider) {
 			return res.status(400).json({ success: false })
 		}
@@ -54,8 +68,8 @@ exports.createProvider = async (req, res, next) => {
 
 //@desc     Add pickup and return locations
 //@route    POST /provider/:id
-//@param	{ 
-// 				"pickUpAndReturnLocation": ["Bangkok", "Phuket", "Chiang Mai"] 
+//@param	{
+// 				"pickUpAndReturnLocation": ["Bangkok", "Phuket", "Chiang Mai"]
 // 			}
 //@access   Private
 exports.addPickupAndReturnLocation = async (req, res, next) => {
@@ -87,7 +101,7 @@ exports.addPickupAndReturnLocation = async (req, res, next) => {
 //     			"address"?: "Bangkok",
 //     			"tel"?: "0992225555",
 //     			"rentalCarCapacity"?: 12,
-//				"pickUpAndReturnLocation"?: ["Bangkok", "Phuket", "Chiang Mai"], 
+//				"pickUpAndReturnLocation"?: ["Bangkok", "Phuket", "Chiang Mai"],
 //				"carBookings"?: [{
 //                    "date": "2025-02-16T00:00:00.000Z",
 //                    "amount": 1,

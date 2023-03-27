@@ -13,7 +13,7 @@ const Provider = require("../models/Provider")
 
 //@desc     Get all rental
 //@route    GET /rental
-//@access   Public
+//@access   Private
 exports.getAllRentals = async (req, res, next) => {
 	let query
 	//General users can see only thair rental!
