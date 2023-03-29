@@ -265,7 +265,6 @@ exports.deleteRental = async (req, res, next) => {
 //@example  /availbleProvider?pickUpLocation=...&returnLocation=...&pickUpDate=...&returnDate=...
 //@access   Private
 exports.getAvailableProvider = async (req, res, next) => {
-	let error
 	try {
 		const pickUpDate = new Date(req.query.pickUpDate)
 		const returnDate = new Date(req.query.returnDate)
@@ -297,7 +296,7 @@ exports.getAvailableProvider = async (req, res, next) => {
 			// add provider id if possible to book
 			availableProvider.push(provider.id)
 		}
-		res.status(200).json({ provider: availableProvider })
+		return res.status(200).json({ provider: availableProvider })
 	} catch (error) {
 		return res.status(500).json({ error: error.message })
 	}
