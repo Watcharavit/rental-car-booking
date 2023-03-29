@@ -191,13 +191,7 @@ exports.updateRental = async (req, res, next) => {
 
 		const deletedCarBookings = getDeletedCarBookings(rental, currentProvider)
 
-		error = validateAvailabilityToBook(
-			isSameProvider ? deletedCarBookings : newProvider.carBookings,
-			newProvider.rentalCarCapacity,
-			pickUpDate,
-			returnDate,
-			res
-		)
+		error = validateAvailabilityToBook(isSameProvider ? deletedCarBookings : newProvider.carBookings, newProvider.rentalCarCapacity, pickUpDate, returnDate, res)
 		if (error) return error
 
 		// delete car bookings from old provider
@@ -213,11 +207,7 @@ exports.updateRental = async (req, res, next) => {
 		const updatedNewProvider = await Provider.findByIdAndUpdate(
 			provider,
 			{
-				carBookings: getAddedCarBookings(
-					isSameProvider ? updatedOldProvider : newProvider,
-					pickUpDate,
-					returnDate
-				)
+				carBookings: getAddedCarBookings(isSameProvider ? updatedOldProvider : newProvider, pickUpDate, returnDate)
 			},
 			{ new: true }
 		)
@@ -267,5 +257,48 @@ exports.deleteRental = async (req, res, next) => {
 	} catch (error) {
 		console.log(error)
 		return res.status(500).json({ success: false, message: "Cannot delete this rental" })
+	}
+}
+
+//@desc     Get all available provider's id that have available cars after specifying { pickup location, return location, pickUpDate, returnDate }
+//@route    GET /rental/availbleProvider
+//@example  /availbleProvider?pickUpLocation=...&returnLocation=...&pickUpDate=...&returnDate=...
+//@access   Private
+exports.getAvailableProvider = async (req, res, next) => {
+	let error
+	try {
+		const pickUpDate = new Date(req.query.pickUpDate)
+		const returnDate = new Date(req.query.returnDate)
+		const pickUpLocation = req.query.pickUpLocation
+		const returnLocation = req.query.returnLocation
+		const providers = await Provider.find()
+		const availableProvider = []
+		for (let provider of providers) {
+			// check condition
+
+			// validatePickUpAndReturnLocations
+			if (!provider.pickUpAndReturnLocations.includes(pickUpLocation) && !provider.pickUpAndReturnLocations.includes(returnLocation)) continue
+
+			// validatePickUpAndReturnDate
+			if (isNaN(pickUpDate.getTime()) || isNaN(returnDate.getTime())) continue
+			if (pickUpDate.getTime() > returnDate.getTime()) continue
+			if (pickUpDate.getTime() < Date.now() || returnDate.getTime() < Date.now()) continue
+
+			// validateAvailabilityToBook
+			const availableToBook =
+				provider.carBookings.every((book) => {
+					const bookDate = new Date(book.date)
+					if (pickUpDate.getTime() <= bookDate.getTime() && bookDate.getTime() <= returnDate.getTime()) {
+						return provider.rentalCarCapacity - book.amount > 0
+					} else return true
+				}) && provider.rentalCarCapacity > 0
+			if (!availableToBook) continue
+
+			// add provider id if possible to book
+			availableProvider.push(provider.id)
+		}
+		res.status(200).json({ provider: availableProvider })
+	} catch (error) {
+		return res.status(500).json({ error: error.message })
 	}
 }
