@@ -75,7 +75,8 @@ exports.getPickupAndReturnLocation = async (req, res, next) => {
 		let provider = await Provider.aggregate([
 			{ $unwind: "$pickUpAndReturnLocations" },
 			{ $group: { _id: "$pickUpAndReturnLocations", providers: { $addToSet: "$_id" } } },
-			{ $project: { pickUpAndReturnLocations: "$_id", _id: 0, providers: 1 } }
+			{ $project: { pickUpAndReturnLocations: "$_id", _id: 0, providers: 1 } },
+			{ $sort: { pickUpAndReturnLocations: 1 } }
 		])
 
 		res.status(200).json({ success: true, data: provider })
