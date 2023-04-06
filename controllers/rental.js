@@ -192,7 +192,13 @@ exports.updateRental = async (req, res, next) => {
 
 		const deletedCarBookings = getDeletedCarBookings(rental, currentProvider)
 
-		error = validateAvailabilityToBook(isSameProvider ? deletedCarBookings : newProvider.carBookings, newProvider.rentalCarCapacity, pickUpDate, returnDate, res)
+		error = validateAvailabilityToBook(
+			isSameProvider ? deletedCarBookings : newProvider.carBookings,
+			newProvider.rentalCarCapacity,
+			pickUpDate,
+			returnDate,
+			res
+		)
 		if (error) return error
 
 		// delete car bookings from old provider
@@ -208,7 +214,11 @@ exports.updateRental = async (req, res, next) => {
 		const updatedNewProvider = await Provider.findByIdAndUpdate(
 			provider,
 			{
-				carBookings: getAddedCarBookings(isSameProvider ? updatedOldProvider : newProvider, pickUpDate, returnDate)
+				carBookings: getAddedCarBookings(
+					isSameProvider ? updatedOldProvider : newProvider,
+					pickUpDate,
+					returnDate
+				)
 			},
 			{ new: true }
 		)
