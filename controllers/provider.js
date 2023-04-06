@@ -67,6 +67,24 @@ exports.createProvider = async (req, res, next) => {
 	}
 }
 
+//@desc     GET pickup and return locations with provider id
+//@route    GET /provider/location
+//@access   Private
+exports.getPickupAndReturnLocation = async (req, res, next) => {
+	try {
+		let provider = await Provider.aggregate([
+			{ $unwind: "$pickUpAndReturnLocations" },
+			{ $group: { _id: "$pickUpAndReturnLocations", providers: { $addToSet: "$_id" } } },
+			{ $project: { pickUpAndReturnLocations: "$_id", _id: 0, providers: 1 } }
+		])
+
+		res.status(200).json({ success: true, data: provider })
+	} catch (err) {
+		console.log(err)
+		res.status(400).json({ success: false })
+	}
+}
+
 //@desc     Add pickup and return locations
 //@route    POST /provider/:id
 //@param	{
