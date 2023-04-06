@@ -270,19 +270,14 @@ exports.getAvailableProvider = async (req, res, next) => {
 		const returnDate = new Date(req.query.returnDate)
 		const pickUpLocation = req.query.pickUpLocation
 		const returnLocation = req.query.returnLocation
-		const providers = await Provider.find()
+
+		error = validatePickUpAndReturnDate(pickUpDate, returnDate, res)
+		if (error) return error
+
+		const providers = await Provider.find({ pickUpAndReturnLocations: { $all: [pickUpLocation, returnLocation] } })
 		const availableProvider = []
+
 		for (let provider of providers) {
-			// check condition
-
-			// validatePickUpAndReturnLocations
-			if (!provider.pickUpAndReturnLocations.includes(pickUpLocation) || !provider.pickUpAndReturnLocations.includes(returnLocation)) continue
-
-			// validatePickUpAndReturnDate
-			if (isNaN(pickUpDate.getTime()) || isNaN(returnDate.getTime())) continue
-			if (pickUpDate.getTime() > returnDate.getTime()) continue
-			if (pickUpDate.getTime() < Date.now() || returnDate.getTime() < Date.now()) continue
-
 			// validateAvailabilityToBook
 			const availableToBook =
 				provider.carBookings.every((book) => {
