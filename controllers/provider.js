@@ -1,4 +1,5 @@
 const Provider = require("../models/Provider")
+const { validateProvider } = require("../utils/utils")
 
 //@desc     GET all providers
 //@route    GET /provider
@@ -33,12 +34,12 @@ exports.getProvider = async (req, res, next) => {
 			// User cannot see some fields
 			provider = await Provider.findById(req.params.id, { carBookings: 0, rentalCarCapacity: 0, createdAt: 0 })
 		}
-		if (!provider) {
-			return res.status(400).json({ success: false })
-		}
 
+		let error = validateProvider(provider, req.params.id, res)
+		if (error) return error
 		res.status(200).json({ success: true, data: provider })
 	} catch (err) {
+		console.log(err)
 		res.status(400).json({ success: false })
 	}
 }
@@ -80,9 +81,8 @@ exports.addPickupAndReturnLocation = async (req, res, next) => {
 			{ $addToSet: { pickUpAndReturnLocations: { $each: pickUpAndReturnLocation } } },
 			{ new: true }
 		)
-		if (!provider) {
-			return res.status(400).json({ success: false, error: "Provider not found" })
-		}
+		let error = validateProvider(provider, req.params.id, res)
+		if (error) return error
 
 		res.status(201).json({
 			success: true,
@@ -116,9 +116,9 @@ exports.updateProvider = async (req, res, next) => {
 			runValidators: true
 		})
 
-		if (!provider) {
-			return res.status(400).json({ success: false })
-		}
+		let error = validateProvider(provider, req.params.id, res)
+		if (error) return error
+
 		res.status(200).json({ success: true, data: provider })
 	} catch (err) {
 		res.status(400).json({ success: false })
@@ -132,12 +132,8 @@ exports.deleteProvider = async (req, res, next) => {
 	try {
 		const provider = await Provider.findById(req.params.id)
 
-		if (!provider) {
-			return res.status(400).json({
-				success: false,
-				message: `Provider not found with id of ${req.params.id}`
-			})
-		}
+		let error = validateProvider(provider, req.params.id, res)
+		if (error) return error
 
 		provider.remove()
 		res.status(200).json({ success: true, data: {} })
