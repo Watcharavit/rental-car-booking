@@ -82,11 +82,16 @@ const sendTokenResponse = (user, statusCode, res) => {
 //@route 	POST /auth/me
 //@access	Private
 exports.getMe = async (req, res, next) => {
-	const user = await User.findById(req.user.id)
-	res.status(200).json({
-		success: true,
-		data: user
-	})
+	try {
+		const user = await User.findById(req.user.id)
+		res.status(200).json({
+			success: true,
+			data: user
+		})
+	} catch (err) {
+		res.status(400).json({ success: false })
+		console.log(err.stack)
+	}
 }
 
 //@desc		Log out
