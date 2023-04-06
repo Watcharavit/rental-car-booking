@@ -276,7 +276,7 @@ exports.getAvailableProvider = async (req, res, next) => {
 			// check condition
 
 			// validatePickUpAndReturnLocations
-			if (!provider.pickUpAndReturnLocations.includes(pickUpLocation) && !provider.pickUpAndReturnLocations.includes(returnLocation)) continue
+			if (!provider.pickUpAndReturnLocations.includes(pickUpLocation) || !provider.pickUpAndReturnLocations.includes(returnLocation)) continue
 
 			// validatePickUpAndReturnDate
 			if (isNaN(pickUpDate.getTime()) || isNaN(returnDate.getTime())) continue
