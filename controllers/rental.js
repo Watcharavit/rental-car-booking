@@ -150,7 +150,8 @@ exports.addRental = async (req, res, next) => {
 //    			"pickUpDate"?:"2023-05-20",
 //   			"returnDate"?:"2023-05-23",
 //   			"pickUpLocation"?:"Bangkok",
-//   			"returnLocation"?:"Phuket"
+//   			"returnLocation"?:"Phuket",
+//				"provider"?: "642e9213fa2803f4614aa1d0"
 //			}
 //@access   Private
 exports.updateRental = async (req, res, next) => {
