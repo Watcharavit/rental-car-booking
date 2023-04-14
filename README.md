@@ -39,4 +39,4 @@ provider information includes the name, address, and telephone number.
 ### Additional Requirements
 10. The system shall allow the rental car provider to have multiple pickup and return locations of car.
 11. The system shall allow the registered user to specifying pickup and return location of cars for car bookings from multiple location provided by car provider.
-12. The system shall allow the registered user to view available providers that have available cars after specifying pickup and return location.
+12. The system shall allow the registered user to view available providers that have available cars after specifying pickup and return location together with pick up date and return date.
