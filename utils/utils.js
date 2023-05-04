@@ -35,7 +35,7 @@ exports.validatePickUpAndReturnLocations = (provider, pickUpLocation, returnLoca
 
 exports.validatePickUpAndReturnDate = (pickUpDate, returnDate, res) => {
 	if (isNaN(pickUpDate.getTime()) || isNaN(returnDate.getTime())) {
-		return res.status(400).json({ success: false, message: "Please add pick up and return date " })
+		return res.status(400).json({ success: false, message: "Please add pick up and return date" })
 	}
 	if (pickUpDate.getTime() > returnDate.getTime()) {
 		return res.status(400).json({ success: false, message: `Invalid pick up and return date` })
